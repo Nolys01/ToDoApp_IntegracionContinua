@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f1f5f9" />
+    <title>ToDoApp - Docker Project</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: #1e293b;
+        background: #f1f5f9;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(ellipse at 50% 0, rgba(224, 231, 255, 0.62), transparent 38rem),
+          #f1f5f9;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .page {
+        display: flex;
+        width: min(100% - 40px, 760px);
+        min-height: 100vh;
+        flex-direction: column;
+        margin: 0 auto;
+        padding: 64px 0 28px;
+      }
+
+      .header {
+        margin-bottom: 28px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        border: 1px solid #e0e7ff;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.86);
+        padding: 8px 13px;
+        color: #4338ca;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.035em;
+        box-shadow: 0 2px 6px rgba(30, 41, 59, 0.04);
+      }
+
+      .badge-mark {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #6366f1;
+      }
+
+      h1 {
+        margin: 22px 0 8px;
+        color: #0f172a;
+        font-size: clamp(29px, 6vw, 40px);
+        font-weight: 750;
+        letter-spacing: -0.045em;
+        line-height: 1.15;
+      }
+
+      .subtitle {
+        margin: 0;
+        color: #64748b;
+        font-size: 15px;
+        line-height: 1.65;
+      }
+
+      .connection {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        gap: 9px;
+        margin-top: 19px;
+        border: 1px solid #d1fae5;
+        border-radius: 999px;
+        background: #ecfdf5;
+        padding: 7px 12px;
+        color: #047857;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .connection-dot {
+        width: 8px;
+        height: 8px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+      }
+
+      .connection.is-error {
+        border-color: #ffe4e6;
+        background: #fff1f2;
+        color: #be123c;
+      }
+
+      .connection.is-error .connection-dot {
+        background: #f43f5e;
+        box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12);
+      }
+
+      .card {
+        overflow: hidden;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        border-radius: 22px;
+        background: #ffffff;
+        box-shadow:
+          0 18px 45px rgba(15, 23, 42, 0.07),
+          0 3px 8px rgba(15, 23, 42, 0.025);
+      }
+
+      .form-area {
+        padding: 25px;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      .todo-form {
+        display: flex;
+        gap: 11px;
+      }
+
+      .input-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .input-icon {
+        position: absolute;
+        top: 50%;
+        left: 15px;
+        width: 18px;
+        height: 18px;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        font-size: 21px;
+        font-weight: 400;
+        line-height: 16px;
+        pointer-events: none;
+      }
+
+      .todo-input {
+        width: 100%;
+        min-height: 49px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        outline: none;
+        background: #f8fafc;
+        padding: 12px 14px 12px 43px;
+        color: #1e293b;
+        font-size: 14px;
+        transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+      }
+
+      .todo-input::placeholder {
+        color: #94a3b8;
+      }
+
+      .todo-input:hover {
+        border-color: #cbd5e1;
+      }
+
+      .todo-input:focus {
+        border-color: #818cf8;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+      }
+
+      .add-button {
+        display: inline-flex;
+        min-height: 49px;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 0;
+        border-radius: 12px;
+        background: #4f46e5;
+        padding: 0 18px;
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 3px 7px rgba(79, 70, 229, 0.2);
+        transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+      }
+
+      .add-button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        background: #4338ca;
+        box-shadow: 0 6px 12px rgba(79, 70, 229, 0.24);
+      }
+
+      .add-button:focus-visible,
+      .delete-button:focus-visible,
+      .todo-checkbox:focus-visible {
+        outline: 3px solid rgba(99, 102, 241, 0.35);
+        outline-offset: 3px;
+      }
+
+      .add-button:disabled {
+        cursor: wait;
+        opacity: 0.65;
+      }
+
+      .error-message {
+        margin: 12px 1px 0;
+        border-radius: 9px;
+        background: #fff1f2;
+        padding: 10px 12px;
+        color: #be123c;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .error-message[hidden] {
+        display: none;
+      }
+
+      .list-area {
+        padding: 24px 25px 8px;
+      }
+
+      .list-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 8px;
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: #94a3b8;
+        font-size: 10px;
+        font-weight: 750;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        margin: 0;
+        color: #0f172a;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .counter {
+        max-width: 60%;
+        border-radius: 999px;
+        background: #eef2ff;
+        padding: 7px 11px;
+        color: #4338ca;
+        font-size: 11px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .todo-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .todo-item {
+        display: flex;
+        min-height: 69px;
+        align-items: center;
+        gap: 13px;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 13px 1px;
+        transition: opacity 180ms ease, transform 180ms ease;
+      }
+
+      .todo-item:last-child {
+        border-bottom: 0;
+      }
+
+      .todo-item.is-removing {
+        transform: translateX(10px);
+        opacity: 0;
+      }
+
+      .checkbox-label {
+        position: relative;
+        display: flex;
+        width: 21px;
+        height: 21px;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      .todo-checkbox {
+        width: 19px;
+        height: 19px;
+        margin: 0;
+        appearance: none;
+        border: 1.7px solid #cbd5e1;
+        border-radius: 6px;
+        background: #ffffff;
+        cursor: pointer;
+        transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+      }
+
+      .todo-checkbox:hover {
+        border-color: #818cf8;
+      }
+
+      .todo-checkbox:checked {
+        border-color: #4f46e5;
+        background-color: #4f46e5;
+      }
+
+      .check-mark {
+        position: absolute;
+        width: 6px;
+        height: 10px;
+        transform: translateY(-1px) rotate(45deg);
+        border-right: 2px solid #ffffff;
+        border-bottom: 2px solid #ffffff;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 120ms ease;
+      }
+
+      .todo-checkbox:checked + .check-mark {
+        opacity: 1;
+      }
+
+      .todo-copy {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .todo-title {
+        overflow-wrap: anywhere;
+        margin: 0;
+        color: #334155;
+        font-size: 14px;
+        font-weight: 550;
+        line-height: 1.5;
+      }
+
+      .todo-item.is-completed .todo-title {
+        color: #94a3b8;
+        text-decoration: line-through;
+        text-decoration-thickness: 1.5px;
+      }
+
+      .todo-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 7px;
+        margin-top: 5px;
+        color: #94a3b8;
+        font-size: 11px;
+        line-height: 1.4;
+      }
+
+      .state-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .state-label::before {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #f59e0b;
+        content: "";
+      }
+
+      .is-completed .state-label::before {
+        background: #10b981;
+      }
+
+      .delete-button {
+        display: inline-flex;
+        min-width: 36px;
+        min-height: 36px;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 9px;
+        background: transparent;
+        color: #94a3b8;
+        font-size: 19px;
+        font-weight: 400;
+        line-height: 1;
+        cursor: pointer;
+        transition: background 150ms ease, color 150ms ease;
+      }
+
+      .delete-button:hover:not(:disabled) {
+        background: #fff1f2;
+        color: #e11d48;
+      }
+
+      .delete-button:disabled {
+        cursor: wait;
+        opacity: 0.55;
+      }
+
+      .empty-state {
+        padding: 38px 12px 42px;
+        text-align: center;
+      }
+
+      .empty-mark {
+        display: grid;
+        width: 48px;
+        height: 48px;
+        place-items: center;
+        margin: 0 auto 13px;
+        border-radius: 15px;
+        background: #eef2ff;
+        color: #6366f1;
+        font-size: 23px;
+      }
+
+      .empty-title {
+        margin: 0;
+        color: #334155;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .empty-copy {
+        margin: 5px 0 0;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+
+      .card-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid #f1f5f9;
+        background: #f8fafc;
+        padding: 13px 25px;
+        color: #94a3b8;
+        font-size: 11px;
+      }
+
+      .footer-note {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .footer-spark {
+        color: #818cf8;
+        font-size: 14px;
+      }
+
+      .page-footer {
+        margin-top: auto;
+        padding-top: 25px;
+        color: #94a3b8;
+        font-size: 11px;
+        text-align: center;
+      }
+
+      @media (max-width: 560px) {
+        .page {
+          width: min(100% - 28px, 760px);
+          padding-top: 34px;
+        }
+
+        .header {
+          margin-bottom: 21px;
+        }
+
+        .form-area {
+          padding: 18px;
+        }
+
+        .todo-form {
+          flex-direction: column;
+        }
+
+        .add-button {
+          width: 100%;
+        }
+
+        .list-area {
+          padding: 21px 18px 6px;
+        }
+
+        .card-footer {
+          padding-right: 18px;
+          padding-left: 18px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <span class="badge"><span class="badge-mark" aria-hidden="true"></span>Proyecto Integracion continua</span>
+        <h1>ToDoApp - Docker Project</h1>
+        <p class="subtitle">Gestor de tareas con persistencia y contenedores comunicados</p>
+        <div id="connection-status" class="connection" role="status" aria-live="polite">
+          <span class="connection-dot" aria-hidden="true"></span>
+          <span id="status-text">Backend y Base de Datos Conectados</span>
+        </div>
+      </header>
+
+      <section class="card" aria-labelledby="list-title">
+        <div class="form-area">
+          <form id="todo-form" class="todo-form">
+            <label class="input-wrap">
+              <span class="input-icon" aria-hidden="true">+</span>
+              <input
+                id="todo-input"
+                class="todo-input"
+                name="title"
+                type="text"
+                maxlength="500"
+                placeholder="¿Qué tienes en mente?"
+                autocomplete="off"
+                aria-label="Nueva tarea"
+                required
+              />
+            </label>
+            <button id="add-button" class="add-button" type="submit">Agregar Tarea</button>
+          </form>
+          <p id="error-message" class="error-message" role="alert" hidden></p>
+        </div>
+
+        <div class="list-area">
+          <div class="list-heading">
+            <div>
+              <p class="eyebrow">Tu espacio</p>
+              <h2 id="list-title">Lista de tareas</h2>
+            </div>
+            <span id="todo-count" class="counter" aria-live="polite">Cargando tareas...</span>
+          </div>
+          <ul id="todo-list" class="todo-list" aria-label="Tareas"></ul>
+          <div id="empty-state" class="empty-state" hidden>
+            <div class="empty-mark" aria-hidden="true">✓</div>
+            <p class="empty-title">Todo despejado</p>
+            <p class="empty-copy">Agrega una tarea y empieza a avanzar.</p>
+          </div>
+        </div>
+
+        <footer class="card-footer">
+          <span class="footer-note">Los cambios se guardan automáticamente</span>
+          <span class="footer-note"><span class="footer-spark" aria-hidden="true">✦</span>Un paso a la vez</span>
+        </footer>
+      </section>
+
+      <footer class="page-footer">Hecho para ayudarte a enfocarte en lo que importa.</footer>
+    </main>
+
+    <script>
+      const form = document.getElementById('todo-form');
+      const input = document.getElementById('todo-input');
+      const addButton = document.getElementById('add-button');
+      const list = document.getElementById('todo-list');
+      const emptyState = document.getElementById('empty-state');
+      const count = document.getElementById('todo-count');
+      const errorMessage = document.getElementById('error-message');
+      const connectionStatus = document.getElementById('connection-status');
+      const statusText = document.getElementById('status-text');
+
+      let todos = [];
+
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.hidden = false;
+      }
+
+      function clearError() {
+        errorMessage.textContent = '';
+        errorMessage.hidden = true;
+      }
+
+      function setConnectionStatus(connected) {
+        connectionStatus.classList.toggle('is-error', !connected);
+        statusText.textContent = connected
+          ? 'Backend y Base de Datos Conectados'
+          : 'Backend o Base de Datos sin conexión';
+      }
+
+      async function parseResponse(response) {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || 'No se pudo completar la operación.');
+        }
+        return data;
+      }
+
+      function formatDate(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return new Intl.DateTimeFormat('es', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        }).format(date);
+      }
+
+      function updateSummary() {
+        const pending = todos.filter((todo) => !todo.completed).length;
+        const total = todos.length;
+
+        if (total === 0) {
+          count.textContent = '0 tareas';
+        } else {
+          count.textContent = `${pending} pendientes · ${total} ${total === 1 ? 'tarea' : 'tareas'}`;
+        }
+
+        emptyState.hidden = total !== 0;
+      }
+
+      function createTodoRow(todo) {
+        const item = document.createElement('li');
+        item.className = todo.completed ? 'todo-item is-completed' : 'todo-item';
+        item.dataset.todoId = todo.id;
+
+        const checkboxLabel = document.createElement('label');
+        checkboxLabel.className = 'checkbox-label';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'todo-checkbox';
+        checkbox.checked = Boolean(todo.completed);
+        checkbox.setAttribute(
+          'aria-label',
+          todo.completed ? 'Marcar tarea como pendiente' : 'Marcar tarea como completada'
+        );
+        checkbox.addEventListener('change', () => {
+          toggleTodo(todo.id, checkbox.checked, todo.title, checkbox);
+        });
+        const checkMark = document.createElement('span');
+        checkMark.className = 'check-mark';
+        checkMark.setAttribute('aria-hidden', 'true');
+        checkboxLabel.append(checkbox, checkMark);
+
+        const copy = document.createElement('div');
+        copy.className = 'todo-copy';
+
+        const title = document.createElement('p');
+        title.className = 'todo-title';
+        title.textContent = todo.title;
+
+        const meta = document.createElement('div');
+        meta.className = 'todo-meta';
+
+        const state = document.createElement('span');
+        state.className = 'state-label';
+        state.textContent = todo.completed ? 'Completada' : 'Pendiente';
+        meta.append(state);
+
+        const dateText = formatDate(todo.created_at);
+        if (dateText) {
+          const separator = document.createElement('span');
+          separator.setAttribute('aria-hidden', 'true');
+          separator.textContent = '·';
+          const date = document.createElement('time');
+          date.dateTime = todo.created_at;
+          date.textContent = dateText;
+          meta.append(separator, date);
+        }
+
+        copy.append(title, meta);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'delete-button';
+        deleteButton.setAttribute('aria-label', 'Eliminar tarea');
+        deleteButton.title = 'Eliminar tarea';
+        deleteButton.textContent = '×';
+        deleteButton.addEventListener('click', () => deleteTodo(todo.id, deleteButton));
+
+        item.append(checkboxLabel, copy, deleteButton);
+        return item;
+      }
+
+      function renderTodos() {
+        const fragment = document.createDocumentFragment();
+        todos.forEach((todo) => fragment.append(createTodoRow(todo)));
+        list.replaceChildren(fragment);
+        updateSummary();
+      }
+
+      async function loadTodos() {
+        try {
+          const [todosResponse, healthResponse] = await Promise.all([
+            fetch('/todos'),
+            fetch('/health')
+          ]);
+          if (!todosResponse.ok) await parseResponse(todosResponse);
+          if (!healthResponse.ok) await parseResponse(healthResponse);
+
+          todos = await todosResponse.json();
+          renderTodos();
+          setConnectionStatus(true);
+          clearError();
+        } catch (error) {
+          setConnectionStatus(false);
+          count.textContent = 'No disponible';
+          showError(error.message || 'No fue posible cargar las tareas.');
+        }
+      }
+
+      async function addTodo(event) {
+        if (event) event.preventDefault();
+        const title = input.value.trim();
+        if (!title) {
+          input.focus();
+          return;
+        }
+
+        addButton.disabled = true;
+        clearError();
+        try {
+          const response = await fetch('/todos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title })
+          });
+          const createdTodo = await parseResponse(response);
+          todos = [createdTodo, ...todos];
+          renderTodos();
+          input.value = '';
+          input.focus();
+        } catch (error) {
+          showError(error.message || 'No se pudo agregar la tarea.');
+        } finally {
+          addButton.disabled = false;
+        }
+      }
+
+      async function toggleTodo(id, completed, title, checkbox) {
+        if (checkbox) checkbox.disabled = true;
+        clearError();
+        try {
+          const response = await fetch(`/todos/${encodeURIComponent(id)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ completed, title })
+          });
+          const updatedTodo = await parseResponse(response);
+          todos = todos.map((todo) => String(todo.id) === String(id) ? updatedTodo : todo);
+          renderTodos();
+        } catch (error) {
+          if (checkbox) {
+            checkbox.checked = !completed;
+            checkbox.disabled = false;
+          }
+          showError(error.message || 'No se pudo actualizar la tarea.');
+        }
+      }
+
+      async function deleteTodo(id, button) {
+        const item = button.closest('[data-todo-id]');
+        button.disabled = true;
+        clearError();
+        try {
+          const response = await fetch(`/todos/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+          });
+          await parseResponse(response);
+          item.classList.add('is-removing');
+          await new Promise((resolve) => window.setTimeout(resolve, 180));
+          todos = todos.filter((todo) => String(todo.id) !== String(id));
+          item.remove();
+          updateSummary();
+        } catch (error) {
+          button.disabled = false;
+          showError(error.message || 'No se pudo eliminar la tarea.');
+        }
+      }
+
+      form.addEventListener('submit', addTodo);
+      loadTodos();
+    </script>
+  </body>
+</html>
