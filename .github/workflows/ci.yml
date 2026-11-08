@@ -1,0 +1,38 @@
+name: ToDoApp CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create local environment file
+        run: cp .env.example .env
+
+      - name: Build backend image
+        run: docker build -t todoapp-backend ./backend
+
+      - name: Start application with Docker Compose
+        run: docker compose up -d --build
+
+      - name: Verify application health
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail http://localhost:3000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs
+          exit 1
+
+      - name: Stop application
+        if: always()
+        run: docker compose down
