@@ -6,7 +6,7 @@ services:
       - "3000:3000"
     environment:
       PORT: 3000
-      DB_HOST: ${DB_HOST:-db}
+      DB_HOST: db
       DB_PORT: ${DB_PORT:-5432}
       DB_NAME: ${DB_NAME:-todoapp}
       DB_USER: ${DB_USER:-todoapp}
