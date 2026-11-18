@@ -7,6 +7,7 @@ Aplicación de gestión de tareas con frontend web, API REST en Node.js/Express 
 ```text
 .
 ├── .github/workflows/ci.yml
+├── Jenkinsfile
 ├── backend/
 │   ├── public/index.html
 │   ├── .dockerignore
@@ -133,3 +134,41 @@ La aplicación obtiene sus credenciales de `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_
 ## Integración continua
 
 El workflow de GitHub Actions en `.github/workflows/ci.yml` se ejecuta en `push` y `pull_request` dirigidos a `main`. Prepara `.env` desde la plantilla, construye la imagen, inicia Compose, consulta `/health` y detiene los servicios al terminar.
+
+## Integración Continua con Jenkins (Entrega 2)
+
+### Infraestructura
+
+Ejecuta Jenkins como contenedor con la imagen `jenkins/jenkins:lts`, un volumen persistente `jenkins_home` y acceso al socket Docker del host. El agente que ejecuta el pipeline también necesita Docker CLI y Docker Compose v2; la imagen oficial de Jenkins no los incluye por defecto. Por ejemplo, en un host Linux:
+
+```sh
+docker run -d --name jenkins --restart unless-stopped \
+  -p 8080:8080 -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --add-host=host.docker.internal:host-gateway \
+  jenkins/jenkins:lts
+```
+
+El mapeo `host.docker.internal` permite que el agente Jenkins consulte el puerto publicado por Compose. El usuario Jenkins debe tener permisos para usar el socket Docker.
+
+### Plugins y credenciales
+
+Instala los plugins **Git**, **Pipeline**, **Docker Pipeline** y **Pipeline: Stage View**. Configura en Jenkins credenciales de tipo **Secret text** con estos IDs; sus valores deben corresponder a las credenciales de la base de datos:
+
+- `todoapp-db-user`
+- `todoapp-db-password`
+- `todoapp-db-name`
+
+El `Jenkinsfile` inyecta esos valores con `credentials()` y configura `DB_HOST=db`, `DB_PORT=5432`, `COMPOSE_PROJECT_NAME=todoapp-ci` y `APP_PORT=3001`. El puerto `3001` se publica en el host para las pruebas; el backend continúa escuchando en el puerto interno `3000`.
+
+### Pipeline y disparador
+
+Configura un Pipeline desde SCM para que Jenkins lea el `Jenkinsfile` de la raíz del repositorio. Sus etapas son:
+
+1. **Checkout**: descarga el código y muestra el commit actual.
+2. **Build**: obtiene la imagen de PostgreSQL y construye sin caché la imagen del backend.
+3. **Test**: levanta el entorno Compose, espera hasta 30 segundos a que ambos contenedores estén saludables y la API responda, comprueba la resolución DNS del servicio `db` y realiza pruebas HTTP de creación y lectura de una tarea.
+4. **post**: imprime los logs si falla, confirma el resultado si tiene éxito y siempre detiene los contenedores y elimina las redes y volúmenes de prueba con `docker compose down -v`.
+
+El disparador `Poll SCM` está configurado con `* * * * *`: Jenkins consulta el repositorio cada minuto y ejecuta el pipeline cuando detecta cambios.
