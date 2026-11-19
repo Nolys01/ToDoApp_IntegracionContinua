@@ -71,8 +71,8 @@ pipeline {
             -H "Content-Type: application/json" \
             -d '{"title":"Prueba automatizada Jenkins"}')
 
-        if [ "$http_code" != "500" ]; then
-            echo "Se esperaba HTTP 500 al crear la tarea; se recibió HTTP $http_code."
+          if [ "$http_code" != "201" ]; then
+            echo "Se esperaba HTTP 201 al crear la tarea; se recibió HTTP $http_code."
             exit 1
           fi
 
