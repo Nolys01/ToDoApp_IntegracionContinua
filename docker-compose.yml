@@ -3,7 +3,7 @@ services:
     build:
       context: ./backend
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     environment:
       PORT: 3000
       DB_HOST: db
@@ -11,6 +11,16 @@ services:
       DB_NAME: ${DB_NAME:-todoapp}
       DB_USER: ${DB_USER:-todoapp}
       DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env}
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "const r=require('http').get('http://127.0.0.1:3000/health',res=>{res.resume();process.exit(res.statusCode===200?0:1)});r.setTimeout(2000,()=>{r.destroy();process.exit(1)});r.on('error',()=>process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
     depends_on:
       db:
         condition: service_healthy
